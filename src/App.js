@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 // import "./App.css";
 
 const App = () => {
-  const [continents, setContinents] = useState([]);
+  const [continents, setContinents] = useState({});
   const [search, setSearch] = useState("");
   const [continent, setContinent] = useState("Asia");
   const [viewValue, setViewValue] = useState();
@@ -53,6 +53,7 @@ const App = () => {
   };
 
   const handleSearchChange = (event) => {
+    setViewValue({});
     setSearch(event.target.value);
 
     if (timeoutId) {
@@ -143,6 +144,8 @@ const App = () => {
     );
   };
   const renderLayout = () => {
+    if (!Object.keys(continents).length) return <div>Loading...</div>;
+
     if (search) return renderCard();
 
     return (
