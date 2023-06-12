@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-// import "./App.css";
+import moment from "moment";
 
 const App = () => {
   const [continents, setContinents] = useState({});
@@ -7,6 +7,7 @@ const App = () => {
   const [continent, setContinent] = useState("Asia");
   const [viewValue, setViewValue] = useState();
   const [timeoutId, setTimeoutId] = useState(null);
+  const [searchData, setSearchData] = useState([]);
   useEffect(() => {
     fetchData();
   }, []);
@@ -32,28 +33,29 @@ const App = () => {
     }
   };
 
-  const fetchCountryData = async () => {
+  const fetchCountryData = async (name) => {
     try {
-      const url = "https://covid-193.p.rapidapi.com/history?country=india";
-      const options = {
-        method: "GET",
-        headers: {
-          "X-RapidAPI-Key":
-            "ded26d440amshb59d624a4c642dap1735eejsn2f91a77d170b",
-          "X-RapidAPI-Host": "covid-193.p.rapidapi.com",
-        },
-      };
+      const response = await fetch(
+        `https://covid-193.p.rapidapi.com/history?country=${name}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-RapidAPI-Host": "covid-193.p.rapidapi.com",
+            "X-RapidAPI-Key":
+              "ded26d440amshb59d624a4c642dap1735eejsn2f91a77d170b", // Replace with your RapidAPI access key
+          },
+        }
+      );
+      const data = await response.json();
 
-      const response = await fetch(url, options);
-      const result = await response.text();
-      console.log(result);
+      setSearchData(data.response);
     } catch (error) {
       console.error(error);
     }
   };
 
   const handleSearchChange = (event) => {
-    setViewValue({});
     setSearch(event.target.value);
 
     if (timeoutId) {
@@ -61,7 +63,7 @@ const App = () => {
     }
 
     const timeout = setTimeout(() => {
-      fetchCountryData();
+      fetchCountryData(event.target.value);
     }, 2000);
 
     setTimeoutId(timeout);
@@ -143,10 +145,73 @@ const App = () => {
       </div>
     );
   };
+  const renderSearchCard = () => {
+    if (!searchData.length) return <div>Loading...</div>;
+    return (
+      <div>
+        <div className="flex mb-[4vh] font-700 text-24">
+          {searchData[0]?.country || renderBar()}
+        </div>
+        <div className="grid grid-cols-3 h-[40vh] overflow-y-auto w-[70vw]">
+          {searchData.map((item, index) => {
+            return (
+              <div className="w-[80%] my-[2vh]" key={index}>
+                <div className="grid grid-cols-2">
+                  <div>Date: </div>
+                  {item?.day || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Time: </div>
+                  {moment(item?.time).format('HH:mm') || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Population: </div>
+                  {item?.population || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Total: </div>
+                  {item?.cases?.total || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Active: </div>
+                  {item?.cases?.active || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Critical: </div>
+                  {item?.cases?.critical || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Recovered: </div>
+                  {item?.cases?.recovered || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>New: </div>
+                  {item?.cases?.new || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>critical: </div>
+                  {item?.cases?.critical || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Death: </div>
+                  {item?.deaths?.total || renderBar()}
+                </div>
+                <div className="grid grid-cols-2">
+                  <div>Tests: </div>
+                  {item?.tests?.total || renderBar()}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const renderLayout = () => {
     if (!Object.keys(continents).length) return <div>Loading...</div>;
 
-    if (search) return renderCard();
+    if (search) return renderSearchCard();
 
     return (
       <div className="grid  grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-40">
